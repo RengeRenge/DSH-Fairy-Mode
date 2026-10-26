@@ -1,0 +1,7 @@
+# Assets that must not travel with the package.
+boot.mp4
+fairy_ref.wav
+*.pth
+*.ckpt
+logs/
+node_modules/

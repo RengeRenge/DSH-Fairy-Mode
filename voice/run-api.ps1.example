@@ -1,0 +1,21 @@
+# Example launcher for the optional voice. Copy to <FAIRYKIT_HOME>\run-api.ps1,
+# point $python and $config at your own install, then either set FAIRYKIT_HOME
+# or edit the paths. The overlay starts this when the reader is switched on and
+# kills the process tree when it is switched off.
+$ErrorActionPreference = 'Stop'
+$root = 'D:\FairyKit\gpt-sovits'                          # your GPT-SoVITS checkout
+$python = 'D:\FairyKit\venv\Scripts\pythonw.exe'          # pythonw: no console window
+$config = 'D:\FairyKit\voice\tts_infer_fairy.yaml'        # your weights + reference audio
+$log = Join-Path $PSScriptRoot 'logs\tts.log'
+
+New-Item -ItemType Directory -Force -Path (Split-Path $log) | Out-Null
+Add-Content -Path $log -Value ('{0} launcher boot' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'))
+
+$listening = $null
+try { $listening = Get-NetTCPConnection -LocalPort 9880 -State Listen -ErrorAction SilentlyContinue } catch { }
+if ($listening) { Add-Content $log 'port 9880 already listening'; exit 0 }
+
+$proc = Start-Process -FilePath $python `
+    -ArgumentList @((Join-Path $root 'api_v2.py'), '-a', '127.0.0.1', '-p', '9880', '-c', $config) `
+    -WorkingDirectory $root -WindowStyle Hidden -PassThru
+Set-Content -Path (Join-Path $PSScriptRoot 'logs\tts.pid') -Value $proc.Id
