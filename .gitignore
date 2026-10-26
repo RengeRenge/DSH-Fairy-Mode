@@ -1,6 +1,5 @@
-# Assets that must not travel with the package.
-boot.mp4
-fairy_ref.wav
+# Voice weights are not part of this package: GPT-SoVITS needs its own runtime,
+# and the fine-tuned weights belong to the game's rights holder.
 *.pth
 *.ckpt
 logs/
