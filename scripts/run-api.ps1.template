@@ -1,0 +1,80 @@
+# Launches the GPT-SoVITS v2 API that the overlay talks to.
+#
+# scripts/setup-voice.ps1 writes this file with the paths filled in. Do not edit
+# by hand unless you moved the install afterwards.
+#
+# The overlay starts it when the reader is switched on and kills the process tree
+# when it is switched off, so this must stay idempotent: an existing listener
+# means "nothing to do".
+#
+# Logs: __HOME__\logs\tts.log (state), tts.out.log / tts.err.log (uvicorn).
+
+$ErrorActionPreference = 'Stop'
+$root = '__GPT_SOVITS__'
+$python = '__PYTHON__'
+$config = '__CONFIG__'
+# 19880: 9880 is often taken by another local TTS. Override with FAIRY_TTS_PORT.
+$port = if ($env:FAIRY_TTS_PORT) { [int]$env:FAIRY_TTS_PORT } else { 19880 }
+$stateLog = '__HOME__\logs\tts.log'
+$outLog = '__HOME__\logs\tts.out.log'
+$errLog = '__HOME__\logs\tts.err.log'
+$pidFile = '__HOME__\logs\tts.pid'
+
+function Write-Log([string]$Message) {
+    $line = '{0} {1}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Message
+    try {
+        [IO.File]::AppendAllText($stateLog, $line + "`r`n", (New-Object System.Text.UTF8Encoding($false)))
+    } catch {
+        # A log that cannot be written must never take the server down.
+    }
+}
+
+try { New-Item -ItemType Directory -Force -Path (Split-Path $stateLog) | Out-Null } catch { }
+Write-Log 'launcher boot'
+
+trap {
+    Write-Log ('LAUNCHER FAILED: ' + $_.Exception.Message)
+    exit 1
+}
+
+$listening = $null
+try { $listening = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue } catch { $listening = $null }
+if ($listening) {
+    Write-Log ("port $port already listening; nothing to do")
+    exit 0
+}
+
+Write-Log "starting api_v2 (config=$config)"
+$env:PYTHONIOENCODING = 'utf-8'
+$env:PYTHONUTF8 = '1'
+$env:HF_ENDPOINT = 'https://hf-mirror.com'
+
+# The child's bytes go straight to the files: a PowerShell redirection would turn
+# uvicorn's stderr lines into ErrorRecords and abort this script under
+# ErrorActionPreference Stop. -WindowStyle Hidden is the fallback for a venv
+# without pythonw.exe; the console exists but is never shown.
+$proc = Start-Process -FilePath $python `
+    -ArgumentList @((Join-Path $root 'api_v2.py'), '-a', '127.0.0.1', '-p', [string]$port, '-c', $config) `
+    -WorkingDirectory $root `
+    -RedirectStandardOutput $outLog -RedirectStandardError $errLog `
+    -WindowStyle Hidden -PassThru
+
+Write-Log ("api_v2 pid " + $proc.Id)
+try { [IO.File]::WriteAllText($pidFile, [string]$proc.Id, (New-Object System.Text.UTF8Encoding($false))) } catch { }
+
+# The port is the only authority on readiness: pythonw hands the server to a
+# child, so the launcher process exiting is not proof of anything.
+$sawExit = $false
+for ($i = 0; $i -lt 120; $i++) {
+    Start-Sleep -Seconds 2
+    if (-not $sawExit -and $proc.HasExited) {
+        $sawExit = $true
+        Write-Log ("launcher process exited (code " + $proc.ExitCode + "); still waiting on the port")
+    }
+    try {
+        if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) {
+            Write-Log ("api_v2 ready on 127.0.0.1:$port")
+            break
+        }
+    } catch { }
+}

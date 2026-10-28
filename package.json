@@ -1,0 +1,40 @@
+{
+  "name": "dsh-fairy-mode",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Fairy mode for DeepSeek Harness: HDD skin (slots, boot plate, meter, read-aloud) plus the Fairy agent preset, installed and activated as one bundle.",
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "theme",
+    "persona"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-layout"
+      ]
+    }
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "boot.mp4",
+    "boot-field.png",
+    "fairy_ref.wav",
+    "scripts",
+    "voice"
+  ]
+}

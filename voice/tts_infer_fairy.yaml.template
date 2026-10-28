@@ -1,0 +1,13 @@
+# Fairy voice for the HDD overlay. `custom` is the profile api_v2.py reads when
+# started with -c; the weights are a fine-tuned GPT-SoVITS v2 pair.
+#
+# scripts/setup-voice.ps1 fills the absolute paths in when it writes this file;
+# the placeholders below are what a hand-written copy starts from.
+custom:
+  bert_base_path: __GPT_SOVITS__/GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large
+  cnhuhbert_base_path: __GPT_SOVITS__/GPT_SoVITS/pretrained_models/chinese-hubert-base
+  device: cuda
+  is_half: true
+  t2s_weights_path: __HOME__/voice/Fairy-e10.ckpt
+  version: v2
+  vits_weights_path: __HOME__/voice/Fairy_e10_s870.pth

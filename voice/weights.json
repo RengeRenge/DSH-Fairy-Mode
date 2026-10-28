@@ -1,0 +1,25 @@
+{
+  "$comment": "Where the optional voice lives. The package itself carries only the skin and the reference clip; the fine-tuned weights sit in a GitHub release because a 148 MB file is over git's 100 MB per-file limit. scripts/setup-voice.ps1 reads this file, downloads each entry into <FAIRYKIT_HOME>/voice and verifies the sha256 before using it.",
+  "version": "v2",
+  "release": "voice-v1",
+  "files": [
+    {
+      "name": "Fairy_e10_s870.pth",
+      "role": "sovits",
+      "url": "https://github.com/RengeRenge/DSH-Fairy-Mode/releases/download/voice-v1/Fairy_e10_s870.pth",
+      "sha256": "6b60de808ab01e9e68338cca7313f749f0bdc4da2fa2a0cbb69861b8dedc4b67",
+      "bytes": 85006074
+    },
+    {
+      "name": "Fairy-e10.ckpt",
+      "role": "gpt",
+      "url": "https://github.com/RengeRenge/DSH-Fairy-Mode/releases/download/voice-v1/Fairy-e10.ckpt",
+      "sha256": "a299e67c740298af212a2519ced427da973360e45949ef65a2e9627a1ab20e9d",
+      "bytes": 155312502
+    }
+  ],
+  "reference": {
+    "file": "fairy_ref.wav",
+    "prompt": "了解我会如同主人使唤我一般使唤它，并且让它不敢有怨言。"
+  }
+}
